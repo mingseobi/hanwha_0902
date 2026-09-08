@@ -1,21 +1,22 @@
 import numpy as np
 
-# 0부터 8까지의 연속된 숫자로 3x3 행렬 생성
-matrix = np.arange(9).reshape(3, 3)
+# 12개의 원소를 가진 1차원 배열
+vec = np.arange(12)
 
-# 2차원 슬라이싱: 1~2행, 1~2열 추출
-print("부분 행렬:\n", matrix[1:, 1:])
+# 3행 4열 2차원 배열로 형태 변환
+matrix_3x4 = vec.reshape(3, 4)
+print("3x4 행렬:\n", matrix_3x4)
 
-# Boolean Indexing: 5보다 큰 요소만 추출
-mask = matrix > 5
-print("조건 마스크:\n", mask)
-print("5보다 큰 값들:", matrix[mask])
+# 전치 행렬 (행과 열을 맞바꿈 -> 4x3 행렬)
+transposed = matrix_3x4.T
+print("전치(Transpose) 결과:\n", transposed)
 
-# 부분 행렬:
-#  [[4 5]
-#  [7 8]]
-# 조건 마스크:
-#  [[False False False]
-#  [False False False]
-#  [ True  True  True]]
-# 5보다 큰 값들: [6 7 8]
+# 3x4 행렬:
+#  [[ 0  1  2  3]
+#  [ 4  5  6  7]
+#  [ 8  9 10 11]]
+# 전치(Transpose) 결과:
+#  [[ 0  4  8]
+#  [ 1  5  9]
+#  [ 2  6 10]
+#  [ 3  7 11]]
