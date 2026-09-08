@@ -2,9 +2,11 @@
 
 from pydantic import BaseModel, Field
 
+
 class Address(BaseModel):
     city: str
     zip_code: str
+
 
 class User(BaseModel):
     name: str
@@ -12,6 +14,7 @@ class User(BaseModel):
     email: str
     address: Address
     nickname: str | None = None
+
 
 user = User(
     name="Alice",
