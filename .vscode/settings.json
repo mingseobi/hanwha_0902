@@ -1,0 +1,12 @@
+{
+  // 저장할 때 자동으로 black 포맷 적용
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+
+  // 모든 파일 공통: 끝 개행 추가, 줄 끝 공백 제거
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true
+}

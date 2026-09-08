@@ -94,6 +94,20 @@ pip install --upgrade pip
 pip install numpy pydantic
 ```
 
+## 코드 포맷
+
+코드 스타일은 [black](https://black.readthedocs.io)으로 통일합니다. 설정은 `pyproject.toml`에 있습니다.
+
+```bash
+pip install -r requirements-dev.txt
+
+black .          # 전체 포맷 적용
+black --check .  # 변경 없이 검사만
+```
+
+VS Code에서는 `.vscode/settings.json` 설정에 따라 저장할 때 자동으로 적용됩니다.
+권장 확장(`ms-python.black-formatter`)은 처음 프로젝트를 열 때 설치 안내가 표시됩니다.
+
 ## 실행
 
 ```bash

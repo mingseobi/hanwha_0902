@@ -1,0 +1,11 @@
+# 코드 포맷 설정 — black / isort 공통
+# 적용: black .        (전체 포맷)
+#      black --check . (변경 없이 검사만)
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88

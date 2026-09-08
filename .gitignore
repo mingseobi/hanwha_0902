@@ -191,5 +191,7 @@ ehthumbs.db
 Desktop.ini
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
