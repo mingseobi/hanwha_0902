@@ -1,0 +1,16 @@
+# 실습 코드 실행에 필요한 패키지
+# 설치: pip install -r requirements.txt
+
+# 03_numpy
+numpy>=2.0
+
+# 04_pydantic, 05_fastapi
+pydantic>=2.0
+
+# 05_fastapi
+fastapi>=0.115
+uvicorn>=0.30
+
+# 05_fastapi/proj_streamlit
+streamlit>=1.49
+requests>=2.32
