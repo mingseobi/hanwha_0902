@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -7,7 +7,7 @@ app = FastAPI()
 # 데이터 형식
 class User(BaseModel):
     name: str
-    price: float
+    email: str
     desc: str | None = None
 
 
@@ -18,37 +18,29 @@ class Product(BaseModel):
 
 # 임시 데이터
 users = [
-    {
-        "id": 1,
-        "name": "철수",
-        "price": 1000,
-        "desc": "첫 번째 사용자"
-    },
+    {"id": 1, "name": "철수", "email": "chulsoo@example.com", "desc": "첫 번째 사용자"},
     {
         "id": 2,
         "name": "영희",
-        "price": 2000,
-        "desc": "두 번째 사용자"
-    }
+        "email": "younghee@example.com",
+        "desc": "두 번째 사용자",
+    },
 ]
 
 products = [
-    {
-        "id": 1,
-        "name": "노트북",
-        "price": 1000000
-    },
-    {
-        "id": 2,
-        "name": "마우스",
-        "price": 30000
-    }
+    {"id": 1, "name": "노트북", "price": 1000000},
+    {"id": 2, "name": "마우스", "price": 30000},
 ]
+
+# ID 카운터 - 현재 데이터의 최댓값 다음부터 시작해 삭제와 무관하게 증가한다
+user_id_counter = max((user["id"] for user in users), default=0) + 1
+product_id_counter = max((product["id"] for product in products), default=0) + 1
 
 
 # =========================
 # GET - 조회
 # =========================
+
 
 @app.get("/")
 async def root():
@@ -67,7 +59,9 @@ async def get_user(user_id: int):
         if user["id"] == user_id:
             return user
 
-    return {"message": "사용자를 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{user_id}번 사용자를 찾을 수 없습니다."
+    )
 
 
 @app.get("/products")
@@ -82,55 +76,53 @@ async def get_product(product_id: int):
         if product["id"] == product_id:
             return product
 
-    return {"message": "상품을 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{product_id}번 상품을 찾을 수 없습니다."
+    )
 
 
 # =========================
 # POST - 생성
 # =========================
 
-@app.post("/users")
-async def create_user(user: User):
 
-    new_id = len(users) + 1
+@app.post("/users", status_code=201)
+async def create_user(user: User):
+    global user_id_counter
 
     new_user = {
-        "id": new_id,
+        "id": user_id_counter,
         "name": user.name,
-        "price": user.price,
-        "desc": user.desc
+        "email": user.email,
+        "desc": user.desc,
     }
 
     users.append(new_user)
+    user_id_counter += 1
 
-    return {
-        "message": "사용자가 생성되었습니다.",
-        "user": new_user
-    }
+    return {"message": "사용자가 생성되었습니다.", "user": new_user}
 
 
-@app.post("/products")
+@app.post("/products", status_code=201)
 async def create_product(product: Product):
-
-    new_id = len(products) + 1
+    global product_id_counter
 
     new_product = {
-        "id": new_id,
+        "id": product_id_counter,
         "name": product.name,
-        "price": product.price
+        "price": product.price,
     }
 
     products.append(new_product)
+    product_id_counter += 1
 
-    return {
-        "message": "상품이 생성되었습니다.",
-        "product": new_product
-    }
+    return {"message": "상품이 생성되었습니다.", "product": new_product}
 
 
 # =========================
 # PUT - 수정
 # =========================
+
 
 @app.put("/users/{user_id}")
 async def update_user(user_id: int, user: User):
@@ -142,16 +134,15 @@ async def update_user(user_id: int, user: User):
             users[i] = {
                 "id": user_id,
                 "name": user.name,
-                "price": user.price,
-                "desc": user.desc
+                "email": user.email,
+                "desc": user.desc,
             }
 
-            return {
-                "message": "사용자 정보가 수정되었습니다.",
-                "user": users[i]
-            }
+            return {"message": "사용자 정보가 수정되었습니다.", "user": users[i]}
 
-    return {"message": "사용자를 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{user_id}번 사용자를 찾을 수 없습니다."
+    )
 
 
 @app.put("/products/{product_id}")
@@ -164,20 +155,20 @@ async def update_product(product_id: int, product: Product):
             products[i] = {
                 "id": product_id,
                 "name": product.name,
-                "price": product.price
+                "price": product.price,
             }
 
-            return {
-                "message": "상품 정보가 수정되었습니다.",
-                "product": products[i]
-            }
+            return {"message": "상품 정보가 수정되었습니다.", "product": products[i]}
 
-    return {"message": "상품을 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{product_id}번 상품을 찾을 수 없습니다."
+    )
 
 
 # =========================
 # DELETE - 삭제
 # =========================
+
 
 @app.delete("/users/{user_id}")
 async def delete_user(user_id: int):
@@ -188,12 +179,11 @@ async def delete_user(user_id: int):
 
             deleted_user = users.pop(i)
 
-            return {
-                "message": "사용자가 삭제되었습니다.",
-                "user": deleted_user
-            }
+            return {"message": "사용자가 삭제되었습니다.", "user": deleted_user}
 
-    return {"message": "사용자를 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{user_id}번 사용자를 찾을 수 없습니다."
+    )
 
 
 @app.delete("/products/{product_id}")
@@ -205,9 +195,8 @@ async def delete_product(product_id: int):
 
             deleted_product = products.pop(i)
 
-            return {
-                "message": "상품이 삭제되었습니다.",
-                "product": deleted_product
-            }
+            return {"message": "상품이 삭제되었습니다.", "product": deleted_product}
 
-    return {"message": "상품을 찾을 수 없습니다."}
+    raise HTTPException(
+        status_code=404, detail=f"{product_id}번 상품을 찾을 수 없습니다."
+    )
