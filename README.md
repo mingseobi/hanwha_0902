@@ -27,13 +27,15 @@
 
 ## 가상환경 준비
 
+필요한 패키지는 `requirements.txt`에 정리되어 있습니다.
+
 macOS / Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install numpy pydantic
+pip install -r requirements.txt
 ```
 
 Windows (PowerShell)
@@ -42,7 +44,22 @@ Windows (PowerShell)
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install --upgrade pip
-pip install numpy pydantic
+pip install -r requirements.txt
+```
+
+가상환경은 터미널 단위로 적용됩니다. 새 터미널을 열 때마다 `source .venv/bin/activate`(Windows는 `.venv\Scripts\Activate.ps1`)를 실행해야 합니다. 활성화되면 프롬프트 앞에 `(.venv)`가 표시되고, 종료는 `deactivate`입니다.
+
+| 패키지                  | 사용 폴더                   |
+| ----------------------- | --------------------------- |
+| `numpy`                 | `03_numpy`                  |
+| `pydantic`              | `04_pydantic`, `05_fastapi` |
+| `fastapi`, `uvicorn`    | `05_fastapi`                |
+| `streamlit`, `requests` | `05_fastapi/proj_streamlit` |
+
+설치 상태는 다음 명령으로 확인할 수 있습니다.
+
+```bash
+python -c "import numpy, pydantic, fastapi, streamlit; print('ok')"
 ```
 
 ## 코드 포맷
@@ -61,12 +78,45 @@ VS Code에서는 `.vscode/settings.json` 설정에 따라 저장할 때 자동�
 
 ## 실행
 
+가상환경을 활성화한 상태에서 저장소 루트를 기준으로 실행합니다.
+
 ```bash
 python 01_python-basic/day1_value_type.py
 python 03_numpy/day3_numpy03.py
 python 04_pydantic/day4_pydantic03.py
 ```
 
+### API 서버
+
+`python 파일.py`로는 실행되지 않습니다. ASGI 서버인 uvicorn이 앱을 불러와 구동합니다.
+
 ```bash
-python -c "import numpy, pydantic; print(numpy.__version__, pydantic.VERSION)"
+cd 05_fastapi && uvicorn day6_FastAPI02:app --reload
 ```
+
+`http://127.0.0.1:8000/docs`에서 API 문서를 확인할 수 있습니다.
+
+### day7 프로젝트 (API + 화면)
+
+백엔드와 화면을 함께 띄우므로 **터미널 두 개**가 필요합니다. 각 터미널에서 가상환경을 따로 활성화해야 합니다.
+
+터미널 1 — 백엔드
+
+```bash
+cd ~/Desktop/hanwha_0902 && source .venv/bin/activate && cd 05_fastapi/proj_fastapi && uvicorn day7_fastapi:app --reload
+```
+
+터미널 2 — 화면
+
+```bash
+cd ~/Desktop/hanwha_0902 && source .venv/bin/activate && cd 05_fastapi/proj_streamlit && streamlit run day7_streamlit.py
+```
+
+| 주소                         | 화면           |
+| ---------------------------- | -------------- |
+| `http://127.0.0.1:8501`      | 상품 관리 화면 |
+| `http://127.0.0.1:8000/docs` | API 문서       |
+
+두 명령을 한 터미널에서 연달아 실행하면 두 번째 `cd`가 실패합니다. 첫 명령으로 이미 다른 폴더에 들어가 있기 때문입니다. 위 명령은 매번 홈 기준 경로에서 시작하므로 현재 위치와 무관하게 동작합니다.
+
+종료는 각 터미널에서 `Ctrl + C`입니다.
