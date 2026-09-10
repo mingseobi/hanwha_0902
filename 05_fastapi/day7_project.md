@@ -55,7 +55,57 @@ streamlit run day7_streamlit.py
 | PATCH  | `/items/{id}`    | 200 / 400 / 404 | 부분 수정                    |
 | DELETE | `/items/{id}`    | 204 / 404       | 삭제                         |
 
+표의 응답 코드는 `/docs`에 그대로 표시됩니다. 잘못된 형식을 보내면 422도 발생하지만, 목록이 길어져 문서에서는 감췄습니다.
+
 ⚠️ `/items/summary`는 `/items/{item_id}`보다 **먼저** 등록해야 합니다. 순서가 바뀌면 `summary`가 `item_id`로 해석되어 422가 발생합니다.
+
+### 오류 응답을 문서에 드러내기
+
+FastAPI가 문서에 자동으로 넣어주는 것은 **타입 힌트로 선언한 검증**뿐입니다. 함수 안에서 `raise HTTPException(404, ...)`로 던지는 예외는 코드를 실행해야 알 수 있어서 문서에 나타나지 않습니다.
+
+그대로 두면 `/docs`만 본 사람은 이 API가 404를 낸다는 사실을 알 수 없습니다. `responses`로 직접 적어줍니다.
+
+```python
+class ErrorResponse(BaseModel):
+    detail: str
+
+
+NOT_FOUND = {404: {"model": ErrorResponse, "description": "상품을 찾을 수 없음"}}
+BAD_REQUEST = {400: {"model": ErrorResponse, "description": "수정할 내용이 없음"}}
+
+
+@app.get("/items/{item_id}", response_model=ItemResponse, responses=NOT_FOUND)
+async def get_item(item_id: int):
+    return find_item(item_id)
+```
+
+반대로 자동으로 붙는 422는 파라미터가 있는 모든 경로에 들어가 목록을 어지럽힙니다. OpenAPI 스키마를 한 번 손봐서 문서에서만 걷어냅니다.
+
+```python
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+
+    for path in schema["paths"].values():
+        for operation in path.values():
+            operation.get("responses", {}).pop("422", None)
+
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = custom_openapi
+```
+
+⚠️ **문서에서 감추는 것일 뿐, 동작은 그대로입니다.** `/items/abc`를 호출하면 여전히 422가 반환됩니다. 화면 쪽 `format_error()`가 그 응답을 처리하도록 되어 있습니다.
+
+|                               | 적용 전  | 적용 후               |
+| ----------------------------- | -------- | --------------------- |
+| `GET /items/{item_id}` 문서   | 200, 422 | 200, **404**          |
+| `PATCH /items/{item_id}` 문서 | 200, 422 | 200, **400**, **404** |
+| `/items/abc` 실제 응답        | 422      | 422 (변화 없음)       |
 
 목록 응답에는 전체 개수를 함께 담습니다. 화면이 페이지 수를 계산하려면 현재 페이지의 항목만으로는 부족하기 때문입니다.
 

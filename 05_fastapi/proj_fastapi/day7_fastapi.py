@@ -5,6 +5,7 @@
 """
 
 from fastapi import FastAPI, HTTPException, Query, status
+from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="상품 관리 API", version="1.0.0")
@@ -59,6 +60,18 @@ class Summary(BaseModel):
     total_stock: int
     total_value: int
     out_of_stock: int
+
+
+class ErrorResponse(BaseModel):
+    """HTTPException이 반환하는 형태."""
+
+    detail: str
+
+
+# 문서에 표시할 오류 응답. 함수 안에서 raise하는 예외는
+# FastAPI가 자동으로 알아내지 못하므로 직접 적어준다.
+NOT_FOUND = {404: {"model": ErrorResponse, "description": "상품을 찾을 수 없음"}}
+BAD_REQUEST = {400: {"model": ErrorResponse, "description": "수정할 내용이 없음"}}
 
 
 # =========================
@@ -150,7 +163,7 @@ def find_item(item_id: int) -> dict:
     return items_db[item_id]
 
 
-@app.get("/items/{item_id}", response_model=ItemResponse)
+@app.get("/items/{item_id}", response_model=ItemResponse, responses=NOT_FOUND)
 async def get_item(item_id: int):
     return find_item(item_id)
 
@@ -184,7 +197,7 @@ async def create_item(item: ItemCreate):
 # =========================
 
 
-@app.put("/items/{item_id}", response_model=ItemResponse)
+@app.put("/items/{item_id}", response_model=ItemResponse, responses=NOT_FOUND)
 async def update_item(item_id: int, item: ItemCreate):
     """전체 교체. 보내지 않은 desc는 None이 된다."""
     find_item(item_id)
@@ -200,7 +213,11 @@ async def update_item(item_id: int, item: ItemCreate):
     return items_db[item_id]
 
 
-@app.patch("/items/{item_id}", response_model=ItemResponse)
+@app.patch(
+    "/items/{item_id}",
+    response_model=ItemResponse,
+    responses={**NOT_FOUND, **BAD_REQUEST},
+)
 async def patch_item(item_id: int, item: ItemUpdate):
     """부분 수정. 보낸 필드만 반영한다."""
     stored = find_item(item_id)
@@ -223,10 +240,46 @@ async def patch_item(item_id: int, item: ItemUpdate):
 # =========================
 
 
-@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete(
+    "/items/{item_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=NOT_FOUND,
+)
 async def delete_item(item_id: int):
     find_item(item_id)
     items_db.pop(item_id)
 
     # 204는 본문이 없다
     return None
+
+
+# =========================
+# API 문서 다듬기
+# =========================
+
+
+def custom_openapi():
+    """자동으로 붙는 422 Validation Error 항목을 문서에서 제거한다.
+
+    파라미터가 있는 모든 경로에 FastAPI가 422를 자동으로 넣는데,
+    /docs에서 실제로 확인할 응답과 섞여 읽기 어려워진다.
+
+    문서에서만 감추는 것이며, 잘못된 값을 보내면 422는 그대로 발생한다.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+
+    for path in schema["paths"].values():
+        for operation in path.values():
+            operation.get("responses", {}).pop("422", None)
+
+    for name in ("HTTPValidationError", "ValidationError"):
+        schema.get("components", {}).get("schemas", {}).pop(name, None)
+
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = custom_openapi
