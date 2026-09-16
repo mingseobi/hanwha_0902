@@ -33,8 +33,6 @@ import numpy as np
 
 `np`는 관례적으로 굳어진 별칭입니다.
 
-가상환경 구성은 [저장소 루트의 실행 환경 항목](../README.md#실행-환경)을 참고합니다.
-
 ## list와 ndarray의 차이
 
 ```python

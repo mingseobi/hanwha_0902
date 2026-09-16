@@ -46,8 +46,6 @@ pip install -r ../requirements.txt
 
 day5·day6은 `fastapi`와 `uvicorn`만 있으면 되고, day7 프로젝트는 `streamlit`과 `requests`가 추가로 필요합니다.
 
-가상환경 구성은 [저장소 루트의 가상환경 준비 항목](../README.md#가상환경-준비)을 참고합니다.
-
 ### 서버 실행
 
 `python 파일.py`로는 실행되지 않습니다. ASGI 서버인 uvicorn이 앱을 불러와 구동합니다.

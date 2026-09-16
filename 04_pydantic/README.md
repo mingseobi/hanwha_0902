@@ -43,8 +43,6 @@ print(pydantic.VERSION)   # 2.x
 
 ⚠️ v1과 문법 차이가 크므로 외부 자료를 참고할 때는 버전 확인이 필요합니다.
 
-가상환경 구성은 [저장소 루트의 가상환경 준비 항목](../README.md#가상환경-준비)을 참고합니다.
-
 ## day4_pydantic01.py — BaseModel과 자동 타입 변환
 
 ```python
